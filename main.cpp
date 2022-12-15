@@ -7,18 +7,13 @@
 
 
 struct Animal{
-    Animal(int x,int y, std::string typeOfAnimal){
-        this->x = x;
-        this->y = y;
-        this->typeOfAnimal = std::move(typeOfAnimal);
-        this->food = 15;
-    }
+    Animal(int x, int y, std::string&& typeOfAnimal) noexcept : x(x), y(y), typeOfAnimal(std::move(typeOfAnimal)) {}
 
     int x{};
     int y{};
     std::string typeOfAnimal;
 
-    int food;
+    int food = 15;
 
     int age{};
     int minReproductiveAge{};
@@ -28,11 +23,11 @@ struct Animal{
 };
 
 struct Enviroment{
-    Enviroment(int gridSize,int grassRecoveryPercentage, int cataclysmPercentage){
-        this->gridSize = gridSize;
-        this->grassRecoveryPercentage = grassRecoveryPercentage;
-        this->cataclysmPercentage = cataclysmPercentage;
-    }
+    Enviroment(int gridSize,int grassRecoveryPercentage, int cataclysmPercentage):
+    gridSize(gridSize),
+    grassRecoveryPercentage(grassRecoveryPercentage),
+    cataclysmPercentage(cataclysmPercentage){}
+
     int gridSize;
     std::vector<std::vector<char>> grid;
     int grassRecoveryPercentage;
@@ -91,34 +86,37 @@ void createGrid(Enviroment &Env){
        }
 }
 
-void createNewAnimal(Enviroment &Env,const std::string& typeOfAnimal) {
+
+void createNewAnimal(Enviroment &Env,std::string& typeOfAnimal) {
     std::random_device device{};
     std::mt19937 engine {device()};
     std::uniform_int_distribution<int> distribution {1,Env.gridSize-1};
     int coord_x = distribution(engine);
     int coord_y = distribution(engine);
     if(Env.grid[coord_x][coord_y] == '0' || Env.grid[coord_x][coord_y] == '1') {
-        Env.animals.emplace_back(coord_x,coord_y,typeOfAnimal);
-        Env.grid[coord_x][coord_y] = typeOfAnimal[0];
+        Env.animals.emplace_back(coord_x,coord_y,std::move(typeOfAnimal));
+        Env.grid[coord_x][coord_y] = (Env.animals.end()-1)->typeOfAnimal[0];
     }
     else{
         for (int i = 0; i < Env.gridSize; ++i) {
             for (int j = 0; j < Env.gridSize; ++j) {
                 if(Env.grid[i][j] == '0' || Env.grid[i][j] == '1'){
-                    Env.animals.emplace_back(i,j,typeOfAnimal);
-                    Env.grid[i][j] = typeOfAnimal[0];
+                    Env.animals.emplace_back(i,j,std::move(typeOfAnimal));
+                    Env.grid[coord_x][coord_y] = (Env.animals.end()-1)->typeOfAnimal[0];
+                    return;
                 }
             }
         }
     }
 }
 
+
 void createStartAnimals(Enviroment &Env, int countOfStartPredators,int countOfStartHerbivores){
     for (int i = 0; i < countOfStartPredators; ++i) {
-        createNewAnimal(Env,"predator");
+        createNewAnimal(Env, (std::string &) "predator");
     }
     for (int i = 0; i < countOfStartHerbivores; ++i) {
-        createNewAnimal(Env,"herbivore");
+        createNewAnimal(Env, (std::string &) "herbivore");
     }
 }
 
